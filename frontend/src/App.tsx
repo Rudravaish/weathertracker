@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import axios from 'axios'
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8001'
+
 type RiskLevel = 'Low' | 'Moderate' | 'High' | 'Extreme'
 
 interface ApiAlert {
@@ -90,7 +93,7 @@ function App() {
     setData(null)
 
     try {
-      const resp = await axios.post<ApiResponse>('http://localhost:8000/api/assess-risk', {
+      const resp = await axios.post<ApiResponse>(`${API_BASE_URL}/api/assess-risk`, {
         location: query.trim(),
       })
       setData(resp.data)

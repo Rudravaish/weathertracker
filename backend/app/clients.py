@@ -217,8 +217,6 @@ class GradientAIClient:
     def __init__(self) -> None:
         self._model_access_key = os.getenv("MODEL_ACCESS_KEY")
         self._model_id = os.getenv("GRADIENT_MODEL_ID", "openai-gpt-oss-20b")
-        if not self._model_access_key:
-            raise RuntimeError("MODEL_ACCESS_KEY environment variable is required")
 
     async def explain_risk(
         self,
@@ -233,6 +231,8 @@ class GradientAIClient:
         """
         Call Gradient AI and ask for strictly-JSON explanation + recommendations.
         """
+        if not self._model_access_key:
+            raise RuntimeError("MODEL_ACCESS_KEY environment variable is required")
         system_prompt = (
             "You are a public safety assistant. You receive structured weather and "
             "hazard data for a specific location. Respond ONLY with JSON, no extra "
