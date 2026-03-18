@@ -25,7 +25,10 @@ class GeocodingClient:
     _BASE_URL = "https://nominatim.openstreetmap.org/search"
 
     async def geocode(self, query: str) -> Coordinates:
-        headers = {"User-Agent": "weather-risk-demo/1.0"}
+        headers = {
+            "User-Agent": _default_user_agent(),
+            "Accept": "application/json",
+        }
         params = {"q": query, "format": "json", "limit": 1}
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(self._BASE_URL, params=params, headers=headers)
@@ -50,7 +53,10 @@ class NWSClient:
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
             resp = await client.get(
                 self._POINTS_BASE.format(lat=lat, lon=lon),
-                headers={"User-Agent": "weather-risk-demo/1.0"},
+                headers={
+                    "User-Agent": _default_user_agent(),
+                    "Accept": "application/geo+json,application/json;q=0.9,*/*;q=0.1",
+                },
             )
             resp.raise_for_status()
             data = resp.json()
@@ -66,7 +72,10 @@ class NWSClient:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(
                 point.forecast_hourly_url,
-                headers={"User-Agent": "weather-risk-demo/1.0"},
+                headers={
+                    "User-Agent": _default_user_agent(),
+                    "Accept": "application/geo+json,application/json;q=0.9,*/*;q=0.1",
+                },
             )
             resp.raise_for_status()
             data = resp.json()
@@ -163,7 +172,10 @@ class NWSClient:
             resp = await client.get(
                 url,
                 params=params,
-                headers={"User-Agent": "weather-risk-demo/1.0"},
+                headers={
+                    "User-Agent": _default_user_agent(),
+                    "Accept": "application/geo+json,application/json;q=0.9,*/*;q=0.1",
+                },
             )
             resp.raise_for_status()
             data = resp.json()
@@ -286,6 +298,7 @@ class GradientAIClient:
         headers = {
             "Authorization": f"Bearer {self._model_access_key}",
             "Content-Type": "application/json",
+            "User-Agent": _default_user_agent(),
         }
 
         async with httpx.AsyncClient(timeout=20.0) as client:
@@ -348,4 +361,20 @@ class GradientAIClient:
             explanation=explanation,
             recommendations=recommendations[:5],
         )
+
+
+def _default_user_agent() -> str:
+    """
+    Many public APIs (notably OpenStreetMap Nominatim and NWS) require a meaningful
+    User-Agent. Provide an override via WEATHERTRACKER_USER_AGENT, otherwise include
+    optional contact info via CONTACT_EMAIL.
+    """
+    override = (os.getenv("WEATHERTRACKER_USER_AGENT") or "").strip()
+    if override:
+        return override
+    contact = (os.getenv("CONTACT_EMAIL") or "").strip()
+    base = "weathertracker/1.0"
+    if contact:
+        return f"{base} ({contact})"
+    return base
 
